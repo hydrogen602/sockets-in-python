@@ -18,7 +18,7 @@ class LANconnect:
             raise ValueError('side can only equal "client" or "server"')
         self.side = side
         if myip == None:
-            myip = socket.gethostbyname(socket.gethostname())
+            myip = socket.gethostbyname(socket.gethostname()) # on some computers this raises an exception, in that case myip has to be specified
         self.myip = myip
         self.ip = ip
         self.version = "1.0"
