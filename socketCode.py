@@ -1,10 +1,19 @@
+#
+# How to use:
+# LANconnect() <- starts connection,
+#            - note that the server side must be started first
+#
+# .send(msg) <- sends a msg, this must be in bytes
+# .receive(length) <- receives msg, length is the length of msg
+#
+# .cleanup() <- use at the end of code to close sockets
 
 import socket, time, logging
 logging.basicConfig(level=logging.INFO)
 
 class LANconnect:
 
-    def __init__(self,side,ip,myip=None,port=5005):
+    def __init__(self,side,ip,myip=None,port=5005, blocking=True):
         '''
         Creates a LANconnect object which holds a socket object
 
@@ -19,14 +28,18 @@ class LANconnect:
         self.myip = myip
         self.ip = ip
         self.port = port
+        self.blocking = blocking
         if self.side == "client":
-            self.connect()
+            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.s.connect((self.ip, self.port))
+            logging.info('Connected')
+            self.testConnection()
         if self.side == "server":
             self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             attempts = 0
             while attempts < 3:
                 try:
-                    self.serv.bind((myip,port))
+                    self.serv.bind((myip, port))
                 except OSError:
                     logging.warn('Waiting for socket to close')
                     attempts += 1
@@ -60,11 +73,17 @@ class LANconnect:
             raise ValueError('Expected "' + notSide + '", got "' + resp + '"')
         else:
             logging.info('Setup Done, Connection good')
+        self.s.setblocking(self.blocking)
 
-    def send(self,data):
+    def send(self, data):
+        '''
+        Sends data 
+        '''
+        if isinstance(data, str):
+            data = data.encode()
         self.s.send(data)
 
-    def receive(self,length):
+    def receive(self, length):
         return self.s.recv(length)
 
     def cleanup(self):
